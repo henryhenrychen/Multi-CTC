@@ -58,7 +58,8 @@ class CharacterTextEncoder(_BaseTextEncoder):
         # Always strip trailing space, \r and \n
         s = s.strip("\r\n ")
         # Manually append eos to the end
-        return [self.vocab_to_idx(v) for v in s] + [self.eos_idx]
+        #return [self.vocab_to_idx(v) for v in s] + [self.eos_idx]
+        return [self.vocab_to_idx(v) for v in s]
 
     def decode(self, idxs, ignore_repeat=False):
         vocabs = []
@@ -66,8 +67,8 @@ class CharacterTextEncoder(_BaseTextEncoder):
             v = self.idx_to_vocab(idx)
             if idx == self.pad_idx or (ignore_repeat and t > 0 and idx == idxs[t-1]):
                 continue
-            elif idx == self.eos_idx:
-                break
+            #elif idx == self.eos_idx:
+            #    break
             else:
                 vocabs.append(v)
         return "".join(vocabs)
@@ -89,7 +90,7 @@ class CharacterTextEncoder(_BaseTextEncoder):
         return 'character'
 
     def vocab_to_idx(self, vocab):
-        assert vocab in self._vocab2idx
+        assert vocab in self._vocab2idx, f"{vocab} should appear in vocabs"
         return self._vocab2idx[vocab]
         #return self._vocab2idx.get(vocab, self.unk_idx)
 
