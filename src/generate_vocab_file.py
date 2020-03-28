@@ -12,7 +12,8 @@ def generate_vocab(metas, target, output_dir):
     name = '_'.join(map(lambda x: x[1], metas)) + f'.{target}.txt'
     data = pd.concat([pd.read_csv(meta[0], sep='|') for meta in metas], ignore_index=True)
     data = data[data.ipa.notnull()]
-    tar_list = data[data.split == 'train'][target]
+    #tar_list = data[data.split == 'train'][target]
+    tar_list = data[target]
     tar_set = sorted(set().union(*map(lambda x:set(list(x)), tar_list)))
     with open(Path(output_dir, name), 'w') as f:
         for line in tar_set:
