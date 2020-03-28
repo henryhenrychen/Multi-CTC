@@ -1,7 +1,7 @@
 data:
   corpus:                                 
     root: '/home/henryhenrychen/1TB-SSD/Experiments/master-thesis/mapping_asr/GlobalPhone'
-    metas: ['meta/French.txt', 'meta/Czech.txt', 'meta/Spanish.txt']
+    metas: ['meta/French.txt', 'meta/Czech.txt', 'meta/German.txt']
     target: 'ipa'
     train_split: 'train' 
     dev_split: 'dev'

@@ -58,22 +58,23 @@ def create_dataset(ascending, tokenizer, root, target, metas, batch_size,
         # Training mode
         mode = 'train'
         # Do not use bucketing for dev set
-        dv_set = Dataset(tokenizer, root, metas, target, dev_split)
-        tr_set = Dataset(tokenizer, root, metas, target, train_split)
+        dv_set = Dataset(tokenizer, root, metas, target, dev_split, bucket=batch_size)
+        tr_set = Dataset(tokenizer, root, metas, target, train_split, bucket=batch_size)
 
         # Messages to show
         #msg_list = _data_msg(name, path, train_split.__str__(), len(tr_set),
         #                     dev_split.__str__(), len(dv_set), batch_size, bucketing)
 
-        return tr_set, dv_set, batch_size, batch_size, mode#, msg_list
+        #return tr_set, dv_set, batch_size, batch_size, mode#, msg_list
+        return tr_set, dv_set, 1, 1, mode#, msg_list
     else:
         # Testing model
         mode = 'test'
 
         # Do not use bucketing for dev set
-        dv_set = Dataset(tokenizer, root, metas, target, dev_split)
+        dv_set = Dataset(tokenizer, root, metas, target, dev_split, bucket=batch_size)
         # Do not use bucketing for test set
-        tt_set = Dataset(tokenizer, root, metas, target, tt_split)
+        tt_set = Dataset(tokenizer, root, metas, target, tt_split, bucket=batch_size)
 
         # Messages to show
         #msg_list = _data_msg(name, path, dev_split.__str__(), len(dv_set),
@@ -81,7 +82,7 @@ def create_dataset(ascending, tokenizer, root, target, metas, batch_size,
         #msg_list = [m.replace('Dev', 'Test').replace(
         #    'Train', 'Dev') for m in msg_list]
 
-        return dv_set, tt_set, batch_size, batch_size, mode #, msg_list
+        return dv_set, tt_set, 1, 1, mode #, msg_list
 
 
 

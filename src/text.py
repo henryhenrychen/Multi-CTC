@@ -49,7 +49,9 @@ class CharacterTextEncoder(_BaseTextEncoder):
     def __init__(self, vocab_list):
         # Note that vocab_list must not contain <pad>, <eos> and <unk>
         # <pad>=0, <eos>=1, <unk>=2
-        self._vocab_list = ["<pad>", "<eos>", "<unk>"] + vocab_list
+        #self._vocab_list = ["<pad>", "<eos>", "<unk>"] + vocab_list
+
+        self._vocab_list = ["<pad>"] + vocab_list
         self._vocab2idx = {v: idx for idx, v in enumerate(self._vocab_list)}
 
     def encode(self, s):
@@ -87,7 +89,9 @@ class CharacterTextEncoder(_BaseTextEncoder):
         return 'character'
 
     def vocab_to_idx(self, vocab):
-        return self._vocab2idx.get(vocab, self.unk_idx)
+        assert vocab in self._vocab2idx
+        return self._vocab2idx[vocab]
+        #return self._vocab2idx.get(vocab, self.unk_idx)
 
     def idx_to_vocab(self, idx):
         return self._vocab_list[idx]
