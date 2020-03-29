@@ -28,11 +28,13 @@ def collect_audio_batch(batch, audio_transform, mode):
     file, audio_feat, audio_len, text = [], [], [], []
     with torch.no_grad():
         for b in batch:
-            file.append(str(b[0]).split('/')[-1].split('.')[0])
             feat = audio_transform(str(b[0]))
+            if feat.shape[0] <= 4 * len(b[1]):
+                continue
             audio_feat.append(feat)
             audio_len.append(len(feat))
             text.append(torch.LongTensor(b[1]))
+            file.append(str(b[0]).split('/')[-1].split('.')[0])
     # Descending audio length within each batch
     audio_len, file, audio_feat, text = zip(*[(feat_len, f_name, feat, txt)
                                               for feat_len, f_name, feat, txt in sorted(zip(audio_len, file, audio_feat, text), reverse=True, key=lambda x:x[0])])

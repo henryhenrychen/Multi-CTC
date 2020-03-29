@@ -5,6 +5,8 @@ from src.asr import ASR
 from src.optim import Optimizer
 from src.data import load_dataset
 from src.util import human_format, cal_er, feat_to_fig
+import pdb
+import math
 
 
 class Solver(BaseSolver):
@@ -108,13 +110,17 @@ class Solver(BaseSolver):
 
                 # Backprop
                 grad_norm = self.backward(total_loss)
+
                 self.step += 1
 
                 # Logger
                 if (self.step == 1) or (self.step % self.PROGRESS_STEP == 0):
                     self.progress('Tr stat | Loss - {:.2f} | Grad. Norm - {:.2f} | {}'
                                   .format(total_loss.cpu().item(), grad_norm, self.timer.show()))
-                    self.write_log('wer', {'tr_ctc': cal_er(self.tokenizer, ctc_output, txt, ctc=True)})
+                    #self.write_log('wer', {'tr_ctc': cal_er(self.tokenizer, ctc_output, txt, ctc=True)})
+                    self.write_log('per', {'tr_ctc': cal_er(self.tokenizer, ctc_output, txt, mode='per', ctc=True)})
+                    self.write_log(
+                        'loss', {'tr_ctc': ctc_loss})
 
                 # Validation
                 if (self.step == 1) or (self.step % self.valid_step == 0):
@@ -143,7 +149,7 @@ class Solver(BaseSolver):
             with torch.no_grad():
                 ctc_output, encode_len = self.model(feat, feat_len)
 
-            dev_wer['ctc'].append(cal_er(self.tokenizer, ctc_output, txt, ctc=True))
+            dev_wer['ctc'].append(cal_er(self.tokenizer, ctc_output, txt, mode='cer', ctc=True))
 
             # Show some example on tensorboard
             if i == len(self.dv_set)//2:
@@ -160,7 +166,7 @@ class Solver(BaseSolver):
             if dev_wer[task] < self.best_wer[task]:
                 self.best_wer[task] = dev_wer[task]
                 self.save_checkpoint('best_{}.pth'.format(task), 'wer', dev_wer[task])
-            self.write_log('wer', {'dv_'+task: dev_wer[task]})
+            self.write_log('per', {'dv_'+task: dev_wer[task]})
         self.save_checkpoint('latest.pth', 'wer', dev_wer['ctc'], show_msg=False)
 
         # Resume training

@@ -46,19 +46,19 @@ class _BaseTextEncoder(abc.ABC):
 
 
 class CharacterTextEncoder(_BaseTextEncoder):
-    def __init__(self, vocab_list):
-        # Note that vocab_list must not contain <pad>, <eos> and <unk>
-        # <pad>=0, <eos>=1, <unk>=2
-        #self._vocab_list = ["<pad>", "<eos>", "<unk>"] + vocab_list
-
+    def __init__(self, vocab_list, discard_space):
+        self.discard_space = discard_space
+        # Note that vocab_list must not contain <pad>
         self._vocab_list = ["<pad>"] + vocab_list
+        if self.discard_space:
+            self._vocab_list.remove(' ')
         self._vocab2idx = {v: idx for idx, v in enumerate(self._vocab_list)}
 
     def encode(self, s):
         # Always strip trailing space, \r and \n
         s = s.strip("\r\n ")
-        # Manually append eos to the end
-        #return [self.vocab_to_idx(v) for v in s] + [self.eos_idx]
+        if self.discard_space:
+            s = s.replace(' ', '')
         return [self.vocab_to_idx(v) for v in s]
 
     def decode(self, idxs, ignore_repeat=False):
@@ -67,19 +67,17 @@ class CharacterTextEncoder(_BaseTextEncoder):
             v = self.idx_to_vocab(idx)
             if idx == self.pad_idx or (ignore_repeat and t > 0 and idx == idxs[t-1]):
                 continue
-            #elif idx == self.eos_idx:
-            #    break
             else:
                 vocabs.append(v)
         return "".join(vocabs)
 
     @classmethod
-    def load_from_file(cls, vocab_file):
+    def load_from_file(cls, vocab_file, discard_space):
         with open(vocab_file, "r") as f:
             # Do not strip space because character based text encoder should
             # have a space token
             vocab_list = [line.strip("\r\n") for line in f]
-        return cls(vocab_list)
+        return cls(vocab_list, discard_space)
 
     @property
     def vocab_size(self):
@@ -92,7 +90,6 @@ class CharacterTextEncoder(_BaseTextEncoder):
     def vocab_to_idx(self, vocab):
         assert vocab in self._vocab2idx, f"{vocab} should appear in vocabs"
         return self._vocab2idx[vocab]
-        #return self._vocab2idx.get(vocab, self.unk_idx)
 
     def idx_to_vocab(self, idx):
         return self._vocab_list[idx]
@@ -226,17 +223,5 @@ class BertTextEncoder(_BaseTextEncoder):
         return 2
 
 
-def load_text_encoder(mode, vocab_file):
-    return CharacterTextEncoder.load_from_file(vocab_file)
-    '''
-    if mode == "character":
-        return CharacterTextEncoder.load_from_file(vocab_file)
-    elif mode == "subword":
-        return SubwordTextEncoder.load_from_file(vocab_file)
-    elif mode == "word":
-        return WordTextEncoder.load_from_file(vocab_file)
-    elif mode.startswith("bert-"):
-        return BertTextEncoder.load_from_file(mode)
-    else:
-        raise NotImplementedError("`{}` is not yet supported.".format(mode))
-    '''
+def load_text_encoder(vocab_file, discard_space=False):
+    return CharacterTextEncoder.load_from_file(vocab_file, discard_space)
