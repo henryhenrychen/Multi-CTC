@@ -6,6 +6,8 @@ import torch.nn.functional as F
 
 from src.util import init_weights, init_gate
 from src.module import VGGExtractor, CNNExtractor, RNNLayer
+from src.text import load_text_encoder
+import pdb
 
 
 class ASR(nn.Module):
@@ -22,9 +24,60 @@ class ASR(nn.Module):
         self.ctc_layer = nn.Linear(self.encoder.out_dim, vocab_size)
 
         # Init
-        if init_adadelta:
+        self.init_adadelta = init_adadelta
+        if self.init_adadelta:
             self.apply(init_weights)
 
+    def init_ctclayer(self, new_vocab_size, device):
+        self.ctc_layer = nn.Linear(self.encoder.out_dim, new_vocab_size).to(device)
+        if self.init_adadelta:
+            self.ctc_layer.apply(init_weights)
+
+    def transfer_with_mapping(self, new_vocab_size, transfer_config, cur_tokenizer):
+        '''
+        Transfer ctc layer weight to new one by method =
+            - "no":     not transfer
+            - "ipa":    transfer by ipa ground truth
+            - "mapping":transfer by mapping
+        '''
+        # Load src model weights
+        device = list(self.encoder.parameters())[0].device
+        ckpt_path = transfer_config.pop('src_ckpt')
+        ckpt = torch.load(
+            ckpt_path, map_location=device)
+        old_weights = ckpt['model'].pop('ctc_layer.weight')
+        old_bias = ckpt['model'].pop('ctc_layer.bias')
+        self.encoder.load_state_dict({n[8:]:v for n, v in ckpt['model'].items() if n.startswith('encoder.')})
+        del ckpt
+
+        # Transfer weights
+        method = transfer_config.pop('method')
+        mapping = transfer_config.pop('mapping', None)
+        self.init_ctclayer(new_vocab_size, device)
+        if method == 'no':
+            pass
+        elif method in ['ipa', 'mapping']:
+            old_vocab2idx = load_text_encoder(**transfer_config)._vocab2idx
+            if method == 'ipa':
+                # target --> src
+                mapping = {v:v for v in cur_tokenizer._vocab_list}
+            else:
+                with open(mapping, 'r') as f:
+                    mapping = json.load(f)
+
+            for tar_v, src_v in mapping.items():
+                tar_i = cur_tokenizer._vocab2idx[tar_v]
+                src_i = old_vocab2idx.get(src_v, None)
+                if src_i:
+                    pdb.set_trace()
+                    self.ctc_layer.weight.data[tar_i].copy_(old_weights.data[src_i])
+                    self.ctc_layer.bias.data[tar_i].copy_(old_bias.data[src_i])
+
+        else:
+            raise ValueError(f'Not supporting method {method}')
+
+        msg = f"Tranfsering weight from old CTCLayer with method {method}"
+        return msg
 
     def create_msg(self):
         # Messages for user

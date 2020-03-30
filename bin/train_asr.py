@@ -36,6 +36,14 @@ class Solver(BaseSolver):
                          self.curriculum > 0, **self.config['data'])
         #self.verbose(msg)
 
+    def transfer_weight(self):
+        # Load weights
+        #self.model.init_ctclayer(new_vocab_size, self.device)
+        msg = self.model.transfer_with_mapping(self.vocab_size,
+                                self.config['data']['transfer'],
+                                self.tokenizer)
+        self.verbose(msg)
+
     def set_model(self):
         ''' Setup ASR model and optimizer '''
         # Model
@@ -58,7 +66,11 @@ class Solver(BaseSolver):
         self.enable_apex()
 
         # Automatically load pre-trained model if self.paras.load is given
-        self.load_ckpt()
+        if self.paras.load:
+            self.load_ckpt()
+
+        if self.paras.transfer:
+            self.transfer_weight()
 
         # ToDo: other training methods
 

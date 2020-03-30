@@ -8,10 +8,11 @@ from torch.utils.tensorboard import SummaryWriter
 
 from src.option import default_hparas
 from src.util import human_format, Timer
+from src.text import load_text_encoder
 
 
 class BaseSolver():
-    ''' 
+    '''
     Prototype Solver for all kinds of tasks
     Arguments
         config - yaml-styled config
@@ -90,33 +91,31 @@ class BaseSolver():
         self.timer.cnt('bw')
         return grad_norm
 
+
     def load_ckpt(self):
         ''' Load ckpt if --load option is specified '''
-        if self.paras.load:
-            # Load weights
-            ckpt = torch.load(
-                self.paras.load, map_location=self.device if self.mode == 'train' else 'cpu')
-            self.model.load_state_dict(ckpt['model'])
+        # Load weights
+        ckpt = torch.load(
+            self.paras.load, map_location=self.device if self.mode == 'train' else 'cpu')
+        self.model.load_state_dict(ckpt['model'])
+        # if self.amp:
+        #    amp.load_state_dict(ckpt['amp'])
+        # Load task-dependent items
+        metric = "None"
+        score = 0.0
+        for k, v in ckpt.items():
+            if type(v) is float:
+                metric, score = k, v
+        if self.mode == 'train':
+            self.step = ckpt['global_step']
+            self.optimizer.load_opt_state_dict(ckpt['optimizer'])
+            self.verbose('Load ckpt from {}, restarting at step {} (recorded {} = {:.2f} %)'.format(
+                          self.paras.load, self.step, metric, score))
+        else:
+            self.model.eval()
             if self.emb_decoder is not None:
-                self.emb_decoder.load_state_dict(ckpt['emb_decoder'])
-            # if self.amp:
-            #    amp.load_state_dict(ckpt['amp'])
-            # Load task-dependent items
-            metric = "None"
-            score = 0.0
-            for k, v in ckpt.items():
-                if type(v) is float:
-                    metric, score = k, v
-            if self.mode == 'train':
-                self.step = ckpt['global_step']
-                self.optimizer.load_opt_state_dict(ckpt['optimizer'])
-                self.verbose('Load ckpt from {}, restarting at step {} (recorded {} = {:.2f} %)'.format(
-                              self.paras.load, self.step, metric, score))
-            else:
-                self.model.eval()
-                if self.emb_decoder is not None:
-                    self.emb_decoder.eval()
-                self.verbose('Evaluation target = {} (recorded {} = {:.2f} %)'.format(self.paras.load, metric, score))
+                self.emb_decoder.eval()
+            self.verbose('Evaluation target = {} (recorded {} = {:.2f} %)'.format(self.paras.load, metric, score))
 
     def verbose(self, msg):
         ''' Verbose function for print information to stdout'''
@@ -136,7 +135,7 @@ class BaseSolver():
     def write_log(self, log_name, log_dict):
         '''
         Write log to TensorBoard
-            log_name  - <str> Name of tensorboard variable 
+            log_name  - <str> Name of tensorboard variable
             log_value - <dict>/<array> Value of variable (e.g. dict of losses), passed if value = None
         '''
         if type(log_dict) is dict:
@@ -155,7 +154,7 @@ class BaseSolver():
                 self.log.add_scalars(log_name, log_dict, self.step)
 
     def save_checkpoint(self, f_name, metric, score, show_msg=True):
-        '''' 
+        ''''
         Ckpt saver
             f_name - <str> the name phnof ckpt file (w/o prefix) to store, overwrite if existed
             score  - <float> The value of metric used to evaluate model
@@ -207,7 +206,7 @@ class BaseSolver():
             - self.model (torch.nn.Module)
             - self.optimizer (src.Optimizer),
                 init. w/ self.optimizer = src.Optimizer(self.model.parameters(),**self.config['hparas'])
-        Loading pre-trained model should also be performed here 
+        Loading pre-trained model should also be performed here
         No return value
         '''
         raise NotImplementedError

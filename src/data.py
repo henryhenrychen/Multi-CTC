@@ -89,7 +89,7 @@ def create_dataset(ascending, tokenizer, root, target, metas, batch_size,
 
 
 
-def load_dataset(n_jobs, use_gpu, pin_memory, ascending, corpus, audio, text):
+def load_dataset(n_jobs, use_gpu, pin_memory, ascending, corpus, audio, text, **kwargs):
     ''' Prepare dataloader for training/validation'''
 
     tokenizer = load_text_encoder(**text)

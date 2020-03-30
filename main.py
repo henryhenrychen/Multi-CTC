@@ -21,6 +21,8 @@ parser.add_argument('--outdir', default='result/', type=str,
                     help='Decode output path.', required=False)
 parser.add_argument('--load', default=None, type=str,
                     help='Load pre-trained model (for training only)', required=False)
+parser.add_argument('--transfer', action='store_true',
+                    help='Load pre-trained model and transfer (for training only)')
 parser.add_argument('--seed', default=0, type=int,
                     help='Random seed for reproducable results.', required=False)
 parser.add_argument('--cudnn-ctc', action='store_true',
