@@ -69,7 +69,6 @@ class ASR(nn.Module):
                 tar_i = cur_tokenizer._vocab2idx[tar_v]
                 src_i = old_vocab2idx.get(src_v, None)
                 if src_i:
-                    pdb.set_trace()
                     self.ctc_layer.weight.data[tar_i].copy_(old_weights.data[src_i])
                     self.ctc_layer.bias.data[tar_i].copy_(old_bias.data[src_i])
 

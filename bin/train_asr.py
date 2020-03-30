@@ -8,6 +8,7 @@ from src.util import human_format, cal_er, feat_to_fig
 import pdb
 import math
 
+SAVE_EVERY = True
 
 class Solver(BaseSolver):
     ''' Solver for training'''
@@ -31,10 +32,10 @@ class Solver(BaseSolver):
 
     def load_data(self):
         ''' Load data for training/validation, store tokenizer and input/output shape'''
-        self.tr_set, self.dv_set, self.feat_dim, self.vocab_size, self.tokenizer = \
+        self.tr_set, self.dv_set, self.feat_dim, self.vocab_size, self.tokenizer, msg= \
             load_dataset(self.paras.njobs, self.paras.gpu, self.paras.pin_memory,
                          self.curriculum > 0, **self.config['data'])
-        #self.verbose(msg)
+        self.verbose(msg)
 
     def transfer_weight(self):
         # Load weights
@@ -180,6 +181,8 @@ class Solver(BaseSolver):
                 self.save_checkpoint('best_{}.pth'.format(task), 'wer', dev_wer[task])
             self.write_log('per', {'dv_'+task: dev_wer[task]})
         self.save_checkpoint('latest.pth', 'wer', dev_wer['ctc'], show_msg=False)
+        if SAVE_ERVERY:
+            self.save_checkpoint(f'{self.step}.path', 'wer', dev_wer['ctc'], show_msg=False)
 
         # Resume training
         self.model.train()

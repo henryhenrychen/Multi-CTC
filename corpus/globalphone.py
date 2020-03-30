@@ -16,7 +16,7 @@ def name2path(root, name):
 
 
 class GPDataset(Dataset):
-    def __init__(self, tokenizer, root, meta, target, split, bucket):
+    def __init__(self, tokenizer, root, meta, target, split, bucket, split_frac=1):
         # Setup
         self.tokenizer = tokenizer
         self.bucket_size = bucket
@@ -24,6 +24,11 @@ class GPDataset(Dataset):
         data = pd.concat([pd.read_csv(m, sep='|') for m in meta], ignore_index=True)
         meta = data[data[target].notnull()]
         meta = meta[meta['split'] == split]
+
+        if split in ['dev', 'test']:
+            assert split_frac == 1, "Should not sample from dev or test data"
+
+        meta = meta.sample(frac=split_frac)
 
         file_list = [name2path(root, x) for x in list(meta['file'])]
         #file_list = list(meta['file'])
