@@ -38,6 +38,9 @@ class BaseSolver():
             if mode == 'train':
                 self.exp_name += '_sd{}'.format(paras.seed)
 
+        if paras.prefix is not None:
+            self.exp_name = paras.prefix + '_' + self.exp_name
+
         # Plugin list
         self.emb_decoder = None
 

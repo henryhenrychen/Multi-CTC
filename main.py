@@ -13,6 +13,7 @@ torch.backends.cudnn.benchmark = False
 parser = argparse.ArgumentParser(description='Training E2E asr.')
 parser.add_argument('--config', type=str, help='Path to experiment config.')
 parser.add_argument('--name', default=None, type=str, help='Name for logging.')
+parser.add_argument('--prefix', default=None, type=str, help='Prefix name for logging.')
 parser.add_argument('--logdir', default='log/', type=str,
                     help='Logging path.', required=False)
 parser.add_argument('--ckpdir', default='ckpt/', type=str,
@@ -33,6 +34,7 @@ parser.add_argument('--cpu', action='store_true', help='Disable GPU training.')
 parser.add_argument('--no-pin', action='store_true',
                     help='Disable pin-memory for dataloader')
 parser.add_argument('--test', action='store_true', help='Test the model.')
+parser.add_argument('--save_every', action='store_true', help='Whether to save everytime when validating')
 parser.add_argument('--no-msg', action='store_true', help='Hide all messages.')
 parser.add_argument('--lm', action='store_true',
                     help='Option for training RNNLM.')

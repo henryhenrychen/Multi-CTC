@@ -181,7 +181,7 @@ class Solver(BaseSolver):
                 self.save_checkpoint('best_{}.pth'.format(task), 'wer', dev_wer[task])
             self.write_log('per', {'dv_'+task: dev_wer[task]})
         self.save_checkpoint('latest.pth', 'wer', dev_wer['ctc'], show_msg=False)
-        if SAVE_EVERY:
+        if self.paras.save_every:
             self.save_checkpoint(f'{self.step}.path', 'wer', dev_wer['ctc'], show_msg=False)
 
         # Resume training
