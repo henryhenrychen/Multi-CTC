@@ -10,9 +10,14 @@ code2path = {
     'SP': 'Spanish',
     'CZ': 'Czech'
 }
+# TODO
+LIBRI_ROOT = '/home/henryhenrychen/DATA/corpus/LibriSpeech/LibriSpeech'
 def name2path(root, name):
-    assert name[:2] in code2path
-    return Path(root, code2path[name[:2]], 'wav', name + '.wav')
+    if name[:2] in code2path:
+        path = Path(root, code2path[name[:2]], 'wav', name + '.wav')
+    else:
+        path = Path(LIBRI_ROOT, name + '.wav')
+    return path
 
 
 class GPDataset(Dataset):

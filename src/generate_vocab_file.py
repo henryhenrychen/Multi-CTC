@@ -5,6 +5,7 @@ metas = [
     ('meta/French.txt', 'fr'),
     ('meta/German.txt', 'de'),
     ('meta/Czech.txt', 'cs'),
+    ('meta/English.txt', 'en'),
     ('meta/Spanish.txt', 'sp')
 ]
 
