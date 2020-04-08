@@ -105,7 +105,8 @@ class Solver(BaseSolver):
                                  False, **self.config['data'])
             for data in self.tr_set:
                 # Pre-step : update tf_rate/lr_rate and do zero_grad
-                #tf_rate = self.optimizer.pre_step(self.step)
+                # zero grad here
+                tf_rate = self.optimizer.pre_step(self.step)
                 total_loss = 0
 
                 # Fetch data
@@ -134,6 +135,7 @@ class Solver(BaseSolver):
                 self.timer.cnt('fw')
 
                 # Backprop
+                pdb.set_trace()
                 grad_norm = self.backward(total_loss)
 
                 self.step += 1
