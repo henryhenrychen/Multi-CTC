@@ -4,6 +4,13 @@ from torch.utils.data import Dataset
 import pandas as pd
 import pdb
 
+
+code2weight = {
+    'FR': 25,
+    'GE': 15,
+    'SP': 17.5,
+    'CZ': 27
+        }
 code2path = {
     'FR': 'French',
     'GE': 'German',
@@ -26,12 +33,28 @@ class GPDataset(Dataset):
         self.tokenizer = tokenizer
         self.bucket_size = bucket
 
-        data = pd.concat([pd.read_csv(m, sep='|') for m in meta], ignore_index=True)
-        meta = data[data[target].notnull()]
-        meta = meta[meta['split'] == split]
-
         if split in ['dev', 'test']:
             assert split_frac == 1, "Should not sample from dev or test data"
+        if len(meta) != 1 and split_frac != 1:
+            raise ValueError('only support sample training set for transfer')
+
+        data = []
+        for m in meta:
+            if '|' in m:
+                o = pd.read_csv(m.split('|')[0], sep='|')
+                o = o[o[target].notnull()]
+                o = o[o['split'] == split]
+                d = o.sample(frac=float(m.split('|')[1]))
+                print(f"Data {m} split {split} from {len(o)} to {len(d)}")
+            else:
+                d = pd.read_csv(m, sep='|')
+                d = d[d[target].notnull()]
+                d = d[d['split'] == split]
+            data.append(d)
+        data = pd.concat(data, ignore_index=True)
+        #data = pd.concat([pd.read_csv(m, sep='|') for m in meta], ignore_index=True)
+        meta = data[data[target].notnull()]
+        meta = meta[meta['split'] == split]
 
         meta = meta.sample(frac=split_frac)
 
