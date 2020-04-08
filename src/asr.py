@@ -28,12 +28,13 @@ class ASR(nn.Module):
         if self.init_adadelta:
             self.apply(init_weights)
 
-    def init_ctclayer(self, new_vocab_size, device):
-        self.ctc_layer = nn.Linear(self.encoder.out_dim, new_vocab_size).to(device)
-        if self.init_adadelta:
-            self.ctc_layer.apply(init_weights)
+    def init_ctclayer(self):
+        #self.ctc_layer = nn.Linear(self.encoder.out_dim, new_vocab_size).to(device)
+        #if self.init_adadelta:
+        self.ctc_layer.apply(init_weights)
 
-    def transfer_with_mapping(self, new_vocab_size, transfer_config, cur_tokenizer):
+
+    def transfer_with_mapping(self, ckpt, transfer_config, cur_tokenizer):
         '''
         Transfer ctc layer weight to new one by method =
             - "no":     not transfer
@@ -42,18 +43,19 @@ class ASR(nn.Module):
         '''
         # Load src model weights
         device = list(self.encoder.parameters())[0].device
-        ckpt_path = transfer_config.pop('src_ckpt')
-        ckpt = torch.load(
-            ckpt_path, map_location=device)
+        #ckpt_path = transfer_config.pop('src_ckpt')
+        #ckpt = torch.load(
+        #    ckpt_path, map_location=device)
+
         old_weights = ckpt['model'].pop('ctc_layer.weight')
         old_bias = ckpt['model'].pop('ctc_layer.bias')
         self.encoder.load_state_dict({n[8:]:v for n, v in ckpt['model'].items() if n.startswith('encoder.')})
-        del ckpt
+        #del ckpt
 
         # Transfer weights
         method = transfer_config.pop('method')
         mapping = transfer_config.pop('mapping', None)
-        self.init_ctclayer(new_vocab_size, device)
+        self.init_ctclayer()
         if method == 'no':
             pass
         elif method in ['ipa', 'mapping']:

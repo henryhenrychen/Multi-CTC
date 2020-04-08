@@ -38,11 +38,23 @@ class Solver(BaseSolver):
         self.verbose(msg)
 
     def transfer_weight(self):
+        # Transfer optimizer
+        ckpt_path = self.config['data']['transfer'].pop('src_ckpt')
+        ckpt = torch.load(
+            ckpt_path, map_location=self.device)
+
+        #optim_ckpt = ckpt['optimizer']
+        #for ctc_final_related_param in optim_ckpt['param_groups'][0]['params'][-2:]:
+        #    optim_ckpt['state'].pop(ctc_final_related_param)
+
+        #self.optimizer.load_opt_state_dict(optim_ckpt)
+
         # Load weights
-        #self.model.init_ctclayer(new_vocab_size, self.device)
-        msg = self.model.transfer_with_mapping(self.vocab_size,
+        msg = self.model.transfer_with_mapping(ckpt,
                                 self.config['data']['transfer'],
                                 self.tokenizer)
+        del ckpt
+
         self.verbose(msg)
 
     def set_model(self):
@@ -93,7 +105,7 @@ class Solver(BaseSolver):
                                  False, **self.config['data'])
             for data in self.tr_set:
                 # Pre-step : update tf_rate/lr_rate and do zero_grad
-                tf_rate = self.optimizer.pre_step(self.step)
+                #tf_rate = self.optimizer.pre_step(self.step)
                 total_loss = 0
 
                 # Fetch data
