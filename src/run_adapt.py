@@ -8,14 +8,15 @@ import math
 
 
 VALID_EVERY_EPOCH = 5
-TOTAL_EPOCH = 200
+TOTAL_EPOCH = 400
 
 # Arguments
 parser = argparse.ArgumentParser(description='Training E2E asr.')
 parser.add_argument('--pretrain_path', type=str)
 parser.add_argument('--output_path', type=str, default='ckpt/')
 parser.add_argument('--logdir', type=str, default='log')
-parser.add_argument('--adaption_config', type=str)
+parser.add_argument('--pretrain_config', type=str)
+parser.add_argument('--adapt_config', type=str)
 parser.add_argument('--adapt_every_step', type=int)
 parser.add_argument('--top_adapt_num', type=int, default=20)
 parser.add_argument('--cuda_device', type=int)
@@ -27,9 +28,18 @@ def get_training_data_size(meta_file, target):
     meta = meta[meta['split'] == 'train']
     return len(meta)
 
+def get_cur_base_config(pretrain_config, adapt_config):
+    pretrain_config = yaml.load(open(pretrain_config, 'r'), Loader=yaml.FullLoader)
+    base_config = yaml.load(open(adapt_config, 'r'), Loader=yaml.FullLoader)
+    base_config['data']['audio'] = pretrain_config['data']['audio']
+    for k, v in pretrain_config['data']['text'].items():
+        base_config['data']['transfer'][k] = v
+    base_config['model'] = pretrain_config['model']
+    return base_config
 
-def run(pretrain_path, output_dir, log_dir, base_config, cuda_device=None):
-    config = yaml.load(open(base_config, 'r'), Loader=yaml.FullLoader)
+
+def run(pretrain_path, output_dir, log_dir, config, cuda_device=None):
+    #config = yaml.load(open(base_config, 'r'), Loader=yaml.FullLoader)
 
     meta_file = config['data']['corpus']['metas']
     assert len(meta_file) == 1, "Should adapting to only 1 meta file"
@@ -39,10 +49,10 @@ def run(pretrain_path, output_dir, log_dir, base_config, cuda_device=None):
     # Adjust pretrain model
     config['data']['transfer']['src_ckpt'] = str(pretrain_path)
 
-    # Adjust learning rate
-    for lr in [0.1, 0.5, 1]:
-        # Adjust target language size
-        for frac in [0.015, 0.03, 0.06, 0.12, 0.5, 1]:
+    # Adjust target language size
+    for frac in [0.015, 0.03, 0.06, 0.12, 0.5, 1]:
+        # Adjust learning rate
+        for lr in [0.1, 0.5, 1]:
             config['data']['corpus']['train_split'] = frac
             config['hparas']['lr'] = lr
             valid_step = train_full_size * frac / bs * VALID_EVERY_EPOCH
@@ -66,11 +76,13 @@ def run(pretrain_path, output_dir, log_dir, base_config, cuda_device=None):
             print(cmd)
 
 def exec(args):
-    cur_name = f"{Path(args.pretrain_path).stem}_{Path(args.adaption_config).stem}"
+    cur_name = f"{Path(args.pretrain_path).stem}_{Path(args.adapt_config).stem}"
     cur_out_dir = Path(args.output_path, cur_name)
     cur_out_dir.mkdir(exist_ok=True)
     cur_log_dir = Path(args.logdir, cur_name)
     cur_log_dir.mkdir(exist_ok=True)
+
+    base_config = get_cur_base_config(args.pretrain_config, args.adapt_config)
 
     valids = []
     for pretrain_path in Path(args.pretrain_path).rglob('*0.path'):
@@ -83,7 +95,7 @@ def exec(args):
         #step = int(str(pretrain_path.stem))
         #if (args.adapt_every_step is None or step % args.adapt_every_step == 0)\
         #        and args.min_step <= step <= args.max_step :
-        run(pretrain_path, cur_out_dir, cur_log_dir, args.adaption_config, args.cuda_device)
+        run(pretrain_path, cur_out_dir, cur_log_dir, base_config, args.cuda_device)
 
 
 

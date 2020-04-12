@@ -135,16 +135,16 @@ class Solver(BaseSolver):
                 self.timer.cnt('fw')
 
                 # Backprop
-                pdb.set_trace()
                 grad_norm = self.backward(total_loss)
 
                 self.step += 1
-
                 # Logger
+
                 if (self.step == 1) or (self.step % self.PROGRESS_STEP == 0):
                     self.progress('Tr stat | Loss - {:.2f} | Grad. Norm - {:.2f} | {}'
                                   .format(total_loss.cpu().item(), grad_norm, self.timer.show()))
                     #self.write_log('wer', {'tr_ctc': cal_er(self.tokenizer, ctc_output, txt, ctc=True)})
+                    ctc_output = [x[:length] for x, length in zip(ctc_output, encode_len)]
                     self.write_log('per', {'tr_ctc': cal_er(self.tokenizer, ctc_output, txt, mode='per', ctc=True)})
                     self.write_log(
                         'loss', {'tr_ctc': ctc_loss})
@@ -176,6 +176,7 @@ class Solver(BaseSolver):
             with torch.no_grad():
                 ctc_output, encode_len = self.model(feat, feat_len)
 
+            ctc_output = [x[:length] for x, length in zip(ctc_output, encode_len)]
             dev_wer['ctc'].append(cal_er(self.tokenizer, ctc_output, txt, mode='cer', ctc=True))
 
             # Show some example on tensorboard
@@ -184,7 +185,8 @@ class Solver(BaseSolver):
                     if self.step == 1:
                         self.write_log('true_text{}'.format(
                             i), self.tokenizer.decode(txt[i].tolist()))
-                    self.write_log('ctc_text{}'.format(i), self.tokenizer.decode(ctc_output[i].argmax(dim=-1).tolist(),
+                        self.write_log('ctc_text{}'.format(i),
+                                self.tokenizer.decode(ctc_output[i][:encode_len[i]].argmax(dim=-1).tolist(),
                                                                                      ignore_repeat=True))
 
         # Ckpt if performance improves

@@ -138,11 +138,14 @@ class Encoder(nn.Module):
             module_list.append(vgg_extractor)
             input_dim = vgg_extractor.out_dim
             self.sample_rate = self.sample_rate*4
-        if self.cnn:
+        elif self.cnn:
             cnn_extractor = CNNExtractor(input_size, out_dim=dim[0])
             module_list.append(cnn_extractor)
             input_dim = cnn_extractor.out_dim
             self.sample_rate = self.sample_rate*4
+
+        else: # do nothing
+            input_dim = input_size
 
         # Recurrent encoder
         if module in ['LSTM', 'GRU']:

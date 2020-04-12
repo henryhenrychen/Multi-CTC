@@ -114,12 +114,14 @@ def cal_er(tokenizer, pred, truth, mode='wer', ctc=False):
     # Calculate error rate of a batch
     if pred is None:
         return np.nan
+    elif isinstance(pred, list): # cut to original length:
+        pred = [p.argmax(dim=-1) for p in pred]
     elif len(pred.shape) >= 3:
         pred = pred.argmax(dim=-1)
     er = []
-    for p, t in zip(pred, truth):
-        p = tokenizer.decode(p.tolist(), ignore_repeat=ctc)
-        t = tokenizer.decode(t.tolist())
+    for pr, tr in zip(pred, truth):
+        p = tokenizer.decode(pr.tolist(), ignore_repeat=ctc)
+        t = tokenizer.decode(tr.tolist())
         if mode == 'wer':
             p = p.split(' ')
             t = t.split(' ')
