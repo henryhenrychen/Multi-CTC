@@ -1,0 +1,28 @@
+data:
+  corpus:                                 
+    root: '/home/henryhenrychen/1TB-SSD/Experiments/master-thesis/mapping_asr/GlobalPhone'
+    metas: ['meta/Spanish.txt']
+    target: 'ipa'
+    train_split: 
+    batch_size: 16
+  text:
+    discard_space: True
+    vocab_file: 'corpus/sp.ipa.txt'
+
+  transfer:
+      src_ckpt: ""
+      method: "ipa"
+      mapping: ""
+
+hparas:                                   # Experiment hyper-parameters
+  valid_step: 
+  max_step: 
+  tf_start: 1.0
+  tf_end: 1.0
+  tf_step: 500000
+  optimizer: 'Adadelta'
+  lr: 
+  eps: 0.00000001                         # 1e-8
+  lr_scheduler: 'fixed'                   # 'fixed'/'warmup'
+  curriculum: 0
+

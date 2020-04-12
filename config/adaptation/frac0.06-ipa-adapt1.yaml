@@ -1,0 +1,52 @@
+data:
+  corpus:                                 
+    root: '/home/henryhenrychen/1TB-SSD/Experiments/master-thesis/mapping_asr/GlobalPhone'
+    metas: ['meta/Spanish.txt']
+    target: 'ipa'
+    train_split: 0.06 
+    batch_size: 16
+  audio:                                  # Attributes of audio feature
+    feat_type: 'fbank'
+    feat_dim:  40
+    frame_length: 25                      # ms
+    frame_shift: 10                       # ms
+    dither: 0                             # random dither audio, 0: no dither
+    apply_cmvn: True
+    delta_order: 2                        # 0: do nothing, 1: add delta, 2: add delta and accelerate
+    delta_window_size: 2
+  text:
+    discard_space: True
+    vocab_file: 'corpus/sp.ipa.txt'
+
+  transfer:
+      src_ckpt: ""
+      method: "ipa"
+      mapping: ""
+      # Old config
+      discard_space: True
+      vocab_file: 'corpus/fr_de_cs_en.ipa.txt'
+
+hparas:                                   # Experiment hyper-parameters
+  valid_step: 200
+  max_step: 8000
+  tf_start: 1.0
+  tf_end: 1.0
+  tf_step: 500000
+  optimizer: 'Adadelta'
+  lr: 0.5
+  eps: 0.00000001                         # 1e-8
+  lr_scheduler: 'fixed'                   # 'fixed'/'warmup'
+  curriculum: 0
+
+model:                                    # Model architecture
+  encoder:
+    prenet: 'vgg'                         # 'vgg'/'cnn'/''
+    # vgg: True                             # 4x reduction on time feature extraction
+    module: 'LSTM'                        # 'LSTM'/'GRU'/'Transformer'
+    bidirection: True
+    dim: [256, 256, 256]
+    dropout: [0.15, 0.15, 0.15]
+    layer_norm: [False,False,False]
+    proj: [False, False, False]      # Linear projection + Tanh after each rnn layer
+    sample_rate: [1,1,1]
+    sample_style: 'drop'                  # 'drop'/'concat'
