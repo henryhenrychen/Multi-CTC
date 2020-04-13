@@ -49,16 +49,14 @@ def collect_audio_batch(batch, audio_transform, mode):
 
 
 def create_dataset(ascending, tokenizer, root, target, metas, batch_size,
-                   train_split=1, dev_split=1, test_split=1):
+                   train_split=1, dev_split=1, test_split=1, mode='train'):
     ''' Interface for creating all kinds of dataset'''
 
     # Recognize corpus
     from corpus.globalphone import GPDataset as Dataset
 
     # Create dataset
-    if train_split is not None:
-        # Training mode
-        mode = 'train'
+    if mode == 'train':
         # Do not use bucketing for dev set
         dv_set = Dataset(tokenizer, root, metas, target, 'dev', bucket=batch_size)
         tr_set = Dataset(tokenizer, root, metas, target, 'train', bucket=batch_size, split_frac=train_split)
@@ -70,13 +68,11 @@ def create_dataset(ascending, tokenizer, root, target, metas, batch_size,
         #return tr_set, dv_set, batch_size, batch_size, mode#, msg_list
         return tr_set, dv_set, 1, 1, mode#, msg_list
     else:
-        # Testing model
-        mode = 'test'
 
         # Do not use bucketing for dev set
-        dv_set = Dataset(tokenizer, root, metas, target, dev_split, bucket=batch_size)
+        dv_set = Dataset(tokenizer, root, metas, target, 'dev', bucket=batch_size)
         # Do not use bucketing for test set
-        tt_set = Dataset(tokenizer, root, metas, target, tt_split, bucket=batch_size)
+        tt_set = Dataset(tokenizer, root, metas, target, 'test', bucket=batch_size)
 
         # Messages to show
         #msg_list = _data_msg(name, path, dev_split.__str__(), len(dv_set),
@@ -116,9 +112,11 @@ def load_dataset(n_jobs, use_gpu, pin_memory, ascending, corpus, audio, text, **
     # Messages to show
     #data_msg.append('I/O spec.  | Audio feature = {}\t| feature dim = {}\t| Token type = {}\t| Vocab size = {}'
     #                .format(audio['feat_type'], feat_dim, tokenizer.token_type, tokenizer.vocab_size))
-
-    train_split = corpus.get('train_split', 1) * 100
-    data_msg = f"Using {train_split} % of training data"
+    if mode == 'train':
+        train_split = corpus.get('train_split', 1) * 100
+        data_msg = f"Using {train_split} % of training data"
+    else:
+        data_msg = "Using full data for testing"
     return tr_set, dv_set, feat_dim, tokenizer.vocab_size, tokenizer , data_msg
 
 

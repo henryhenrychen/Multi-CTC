@@ -9,7 +9,7 @@ from torch.utils.tensorboard import SummaryWriter
 from src.option import default_hparas
 from src.util import human_format, Timer
 from src.text import load_text_encoder
-
+import pdb
 
 class BaseSolver():
     '''
@@ -68,6 +68,7 @@ class BaseSolver():
             # Output path
             os.makedirs(paras.outdir, exist_ok=True)
             self.ckpdir = os.path.join(paras.outdir, self.exp_name)
+            os.makedirs(self.ckpdir, exist_ok=True)
 
             # Load training config to get acoustic feat, text encoder and build model
             self.src_config = yaml.load(
@@ -76,6 +77,16 @@ class BaseSolver():
 
             self.verbose('Evaluating result of tr. config @ {}'.format(
                 config['src']['config']))
+
+    def fetch_data(self, data):
+        ''' Move data to device and compute text seq. length'''
+        _, feat, feat_len, txt = data
+        feat = feat.to(self.device)
+        feat_len = feat_len.to(self.device)
+        txt = txt.to(self.device)
+        txt_len = torch.sum(txt != 0, dim=-1)
+
+        return feat, feat_len, txt, txt_len
 
     def backward(self, loss):
         '''

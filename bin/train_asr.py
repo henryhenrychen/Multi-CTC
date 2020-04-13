@@ -20,15 +20,6 @@ class Solver(BaseSolver):
         # Curriculum learning affects data loader
         self.curriculum = self.config['hparas']['curriculum']
 
-    def fetch_data(self, data):
-        ''' Move data to device and compute text seq. length'''
-        _, feat, feat_len, txt = data
-        feat = feat.to(self.device)
-        feat_len = feat_len.to(self.device)
-        txt = txt.to(self.device)
-        txt_len = torch.sum(txt != 0, dim=-1)
-
-        return feat, feat_len, txt, txt_len
 
     def load_data(self):
         ''' Load data for training/validation, store tokenizer and input/output shape'''
@@ -144,7 +135,7 @@ class Solver(BaseSolver):
                     self.progress('Tr stat | Loss - {:.2f} | Grad. Norm - {:.2f} | {}'
                                   .format(total_loss.cpu().item(), grad_norm, self.timer.show()))
                     #self.write_log('wer', {'tr_ctc': cal_er(self.tokenizer, ctc_output, txt, ctc=True)})
-                    ctc_output = [x[:length] for x, length in zip(ctc_output, encode_len)]
+                    ctc_output = [x[:length].argmax(dim=-1) for x, length in zip(ctc_output, encode_len)]
                     self.write_log('per', {'tr_ctc': cal_er(self.tokenizer, ctc_output, txt, mode='per', ctc=True)})
                     self.write_log(
                         'loss', {'tr_ctc': ctc_loss})
@@ -176,8 +167,8 @@ class Solver(BaseSolver):
             with torch.no_grad():
                 ctc_output, encode_len = self.model(feat, feat_len)
 
-            ctc_output = [x[:length] for x, length in zip(ctc_output, encode_len)]
-            dev_wer['ctc'].append(cal_er(self.tokenizer, ctc_output, txt, mode='cer', ctc=True))
+            ctc_output = [x[:length].argmax(dim=-1) for x, length in zip(ctc_output, encode_len)]
+            dev_wer['ctc'].append(cal_er(self.tokenizer, ctc_output, txt, mode='per', ctc=True))
 
             # Show some example on tensorboard
             if i == len(self.dv_set)//2:
