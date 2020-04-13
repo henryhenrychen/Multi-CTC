@@ -8,7 +8,7 @@ import math
 
 
 VALID_EVERY_EPOCH = 5
-TOTAL_EPOCH = 400
+TOTAL_EPOCH = 800
 
 # Arguments
 parser = argparse.ArgumentParser(description='Training E2E asr.')
@@ -52,7 +52,8 @@ def run(pretrain_path, output_dir, log_dir, config, cuda_device=None):
     # Adjust target language size
     for frac in [0.015, 0.03, 0.06, 0.12, 0.5, 1]:
         # Adjust learning rate
-        for lr in [0.1, 0.5, 1]:
+        #for lr in [0.1, 0.5, 1]:
+        for lr in [1]:
             config['data']['corpus']['train_split'] = frac
             config['hparas']['lr'] = lr
             valid_step = train_full_size * frac / bs * VALID_EVERY_EPOCH
@@ -88,7 +89,7 @@ def exec(args):
     for pretrain_path in Path(args.pretrain_path).rglob('*0.path'):
         step = int(str(pretrain_path.stem))
         if args.adapt_every_step is None or step % args.adapt_every_step == 0:
-            score = torch.load(pretrain_path)['wer']
+            score = torch.load(pretrain_path, map_location='cpu')['wer']
             valids.append((pretrain_path, score))
     valids = sorted(valids, key=lambda x: x[1])[:args.top_adapt_num]
     for pretrain_path, _ in valids:
