@@ -177,8 +177,7 @@ class Solver(BaseSolver):
                         self.write_log('true_text{}'.format(
                             i), self.tokenizer.decode(txt[i].tolist()))
                         self.write_log('ctc_text{}'.format(i),
-                                self.tokenizer.decode(ctc_output[i][:encode_len[i]].argmax(dim=-1).tolist(),
-                                                                                     ignore_repeat=True))
+                                self.tokenizer.decode(ctc_output[i].tolist(), ignore_repeat=True))
 
         # Ckpt if performance improves
         for task in ['ctc']:

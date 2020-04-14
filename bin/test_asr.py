@@ -54,6 +54,7 @@ class Solver(BaseSolver):
         # Setup output
         method = 'beam' if not self.greedy else 'greedy'
         self.cur_output_path = Path(self.ckpdir, '{}_{}_output.csv'.format(method, self.config['data']['corpus']['target']))
+        #self.cur_output_path = self.ckpdir + '_{}_{}_output.csv'.format(method, self.config['data']['corpus']['target'])
         with open(self.cur_output_path, 'w') as f:
             f.write("hyp|truth\n")
         tt_output, tt_txt = [], []
