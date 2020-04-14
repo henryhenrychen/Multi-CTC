@@ -10,6 +10,8 @@ import math
 VALID_EVERY_EPOCH = 5
 TOTAL_EPOCH = 800
 
+frac_discount = {1:2}
+
 # Arguments
 parser = argparse.ArgumentParser(description='Training E2E asr.')
 parser.add_argument('--pretrain_path', type=str)
@@ -60,6 +62,9 @@ def run(pretrain_path, output_dir, log_dir, config, cuda_device=None):
             valid_step = math.ceil(valid_step / 100) * 100 # round to 100
             max_step = train_full_size * frac / bs * TOTAL_EPOCH
             max_step = math.ceil(max_step / 100) *100
+            # Discount: for high amount of data, train less epoch
+            max_step /= int(frac_discount.get(frac, 1))
+
             config['hparas']['max_step'] = max_step
             config['hparas']['valid_step'] = valid_step
 

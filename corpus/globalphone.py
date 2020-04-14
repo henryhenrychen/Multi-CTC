@@ -33,7 +33,7 @@ class GPDataset(Dataset):
         # Setup
         self.tokenizer = tokenizer
         self.bucket_size = bucket
-        self.test = split == 'test'
+        self.test = split in ['test', 'dev']
         if split in ['dev', 'test']:
             assert split_frac == 1, "Should not sample from dev or test data"
         if len(meta) != 1 and split_frac != 1:
