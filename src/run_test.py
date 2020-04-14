@@ -28,13 +28,16 @@ def run(output_dir, base_config, src_ckpt_path, cuda_device=None):
     config['src']['ckpt'] = str(src_ckpt_path)
     config['src']['config'] = str(src_config_path)
 
-    cur_output_dir = Path(output_dir, src_ckpt_path.parents[0].name + f"_{Path(base_config).stem}")
+    #cur_output_dir = Path(output_dir, src_ckpt_path.parents[0].name + f"_{Path(base_config).stem}")
+    output_dir = Path(output_dir, src_ckpt_path.parents[0].name)
+    output_dir.mkdir(exist_ok=True)
+    cur_output_dir = Path(output_dir, Path(base_config).stem)
     cur_output_dir.mkdir(exist_ok=True)
     cur_config = Path(cur_output_dir, 'config.yaml')
     with open(cur_config, 'w') as f:
         yaml.dump(config, f)
 
-    cmd = f"python main.py --test --config {cur_config} --name {cur_output_dir.name} --outdir {output_dir}"
+    cmd = f"python main.py --test --config {cur_config} --name {Path(base_config).stem} --outdir {output_dir}"
 
     if cuda_device is not None:
         cmd = f"CUDA_VISIBLE_DEVICES={cuda_device} " + cmd

@@ -12,6 +12,7 @@ import editdistance as ed
 
 from tqdm import tqdm
 from pathlib import Path
+import pdb
 
 class Solver(BaseSolver):
     ''' Solver for training'''
@@ -52,8 +53,7 @@ class Solver(BaseSolver):
     def exec(self):
         ''' Testing End-to-end ASR system '''
         # Setup output
-        method = 'beam' if not self.greedy else 'greedy'
-        self.cur_output_path = Path(self.ckpdir, '{}_{}_output.csv'.format(method, self.config['data']['corpus']['target']))
+        self.cur_output_path = Path(self.ckpdir, 'output.csv')
         #self.cur_output_path = self.ckpdir + '_{}_{}_output.csv'.format(method, self.config['data']['corpus']['target'])
         with open(self.cur_output_path, 'w') as f:
             f.write("hyp|truth\n")

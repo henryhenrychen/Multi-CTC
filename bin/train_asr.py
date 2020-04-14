@@ -69,13 +69,13 @@ class Solver(BaseSolver):
         # Enable AMP if needed
         self.enable_apex()
 
-        # Automatically load pre-trained model if self.paras.load is given
-        if self.paras.load:
-            self.load_ckpt()
 
         if self.paras.transfer:
             self.transfer_weight()
 
+        # Automatically load pre-trained model if self.paras.load is given
+        if self.paras.load:
+            self.load_ckpt()
         # ToDo: other training methods
 
     def exec(self):
