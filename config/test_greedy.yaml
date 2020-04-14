@@ -1,0 +1,7 @@
+src:
+    ckpt: '' 
+    config: ''
+
+batch_size: 16
+decode:
+    beam_size: 1
