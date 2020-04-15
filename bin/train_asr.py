@@ -152,7 +152,6 @@ class Solver(BaseSolver):
                     break
             n_epochs += 1
         #self.log.close()
-        self.write_log('best_score', self.best_wer['ctc'])
     def validate(self):
         # Eval mode
         self.model.eval()
@@ -185,6 +184,7 @@ class Solver(BaseSolver):
             if dev_wer[task] < self.best_wer[task]:
                 self.best_wer[task] = dev_wer[task]
                 self.save_checkpoint('best_{}.pth'.format(task), 'wer', dev_wer[task])
+            self.log.log_other('dv_best_score', self.best_wer['ctc'])
             self.write_log('per', {'dv_'+task: dev_wer[task]})
         self.save_checkpoint('latest.pth', 'wer', dev_wer['ctc'], show_msg=False)
         if self.paras.save_every:
