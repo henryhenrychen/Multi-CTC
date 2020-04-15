@@ -4,6 +4,7 @@ import argparse
 from pathlib import Path
 import math
 
+MAX_EPOCH =
 # Arguments
 parser = argparse.ArgumentParser(description='Training E2E asr.')
 parser.add_argument('--base_config', type=str)
