@@ -138,7 +138,7 @@ class Solver(BaseSolver):
                     ctc_output = [x[:length].argmax(dim=-1) for x, length in zip(ctc_output, encode_len)]
                     self.write_log('per', {'tr_ctc': cal_er(self.tokenizer, ctc_output, txt, mode='per', ctc=True)})
                     self.write_log(
-                        'loss', {'tr_ctc': ctc_loss})
+                        'loss', {'tr_ctc': ctc_loss.cpu().item()})
 
                 # Validation
                 if (self.step == 1) or (self.step % self.valid_step == 0):
@@ -151,8 +151,8 @@ class Solver(BaseSolver):
                 if self.step > self.max_step:
                     break
             n_epochs += 1
-        self.log.close()
-
+        #self.log.close()
+        self.write_log('best_score', self.best_wer['ctc'])
     def validate(self):
         # Eval mode
         self.model.eval()
@@ -173,11 +173,11 @@ class Solver(BaseSolver):
             # Show some example on tensorboard
             if i == len(self.dv_set)//2:
                 for i in range(min(len(txt), self.DEV_N_EXAMPLE)):
-                    if self.step == 1:
-                        self.write_log('true_text{}'.format(
-                            i), self.tokenizer.decode(txt[i].tolist()))
-                        self.write_log('ctc_text{}'.format(i),
-                                self.tokenizer.decode(ctc_output[i].tolist(), ignore_repeat=True))
+                    #if self.step == 1:
+                    self.write_log('true_text{}'.format(
+                        i), self.tokenizer.decode(txt[i].tolist()))
+                    self.write_log('ctc_text{}'.format(i),
+                            self.tokenizer.decode(ctc_output[i].tolist(), ignore_repeat=True))
 
         # Ckpt if performance improves
         for task in ['ctc']:

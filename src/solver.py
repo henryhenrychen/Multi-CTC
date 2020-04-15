@@ -3,12 +3,17 @@ import sys
 import abc
 import math
 import yaml
+from src.comet_marco import *
+import comet_ml
+from comet_ml import Experiment, ExistingExperiment
+
 import torch
-from torch.utils.tensorboard import SummaryWriter
+#from torch.utils.tensorboard import SummaryWriter
 
 from src.option import default_hparas
 from src.util import human_format, Timer
 from src.text import load_text_encoder
+from pathlib import Path
 import pdb
 
 class BaseSolver():
@@ -52,8 +57,10 @@ class BaseSolver():
 
             # Logger settings
             self.logdir = os.path.join(paras.logdir, self.exp_name)
-            self.log = SummaryWriter(
-                self.logdir, flush_secs=self.TB_FLUSH_FREQ)
+            os.makedirs(self.logdir, exist_ok=True)
+            self.log = self.get_comet_logger()
+            #self.log = SummaryWriter(
+            #    self.logdir, flush_secs=self.TB_FLUSH_FREQ)
             self.timer = Timer()
 
             # Hyperparameters
@@ -77,6 +84,43 @@ class BaseSolver():
 
             self.verbose('Evaluating result of tr. config @ {}'.format(
                 config['src']['config']))
+
+    def get_comet_logger(self):
+        if not self.paras.load :
+            comet_exp = Experiment(project_name=COMET_PROJECT_NAME,
+                                         workspace=COMET_WORKSPACE,
+                                         auto_output_logging=None,
+                                         auto_metric_logging=None,
+                                         display_summary=False,
+                                         )
+            comet_exp.set_name(self.exp_name)
+            comet_exp.add_tag(Path(self.ckpdir).parent.name)
+
+            if self.paras.transfer:
+                comet_exp.add_tag('transfer')
+                comet_exp.add_tag(self.config['data']['corpus']['metas'][0])
+            for name, param in self.config.items():
+                if isinstance(param, dict):
+                    comet_exp.log_parameters(param, prefix=name)
+                else:
+                    comet_exp.log_parameter(name, param)
+            comet_exp.log_other('seed', self.paras.seed)
+
+
+            with open(Path(self.logdir,'exp_key'), 'w') as f:
+                print(comet_exp.get_key(),file=f)
+        else:
+            with open(Path(self.logdir,'exp_key'),'r') as f:
+                exp_key = f.read().strip()
+                comet_exp = ExistingExperiment(previous_experiment=exp_key,
+                                                    project_name=COMET_PROJECT_NAME,
+                                                    workspace=COMET_WORKSPACE,
+                                                    auto_output_logging=None,
+                                                    auto_metric_logging=None,
+                                                    display_summary=False,
+                                                    )
+        return comet_exp
+
 
     def fetch_data(self, data):
         ''' Move data to device and compute text seq. length'''
@@ -147,11 +191,23 @@ class BaseSolver():
             print('[{}] {}'.format(human_format(self.step), msg), end='\r')
 
     def write_log(self, log_name, log_dict):
+        if type(log_dict) is dict:
+            log_dict = {key: val for key, val in log_dict.items() if (
+                val is not None and not math.isnan(val))}
+        if log_dict is None:
+            pass
+        #elif len(log_dict) > 0:
+        if 'text' in log_name or 'hyp' in log_name:
+            #print(log_dict)
+            #self.log.log_asset_data(data=log_dict, name=log_name, step=self.step)
+            self.log.log_text(log_dict, step=self.step, metadata={'name':log_name})
+            #self.log.log_metric(log_name, log_dict, step=self.step)
+        else:
+            self.log.log_metrics(log_dict, prefix=log_name, step=self.step)
         '''
         Write log to TensorBoard
             log_name  - <str> Name of tensorboard variable
             log_value - <dict>/<array> Value of variable (e.g. dict of losses), passed if value = None
-        '''
         if type(log_dict) is dict:
             log_dict = {key: val for key, val in log_dict.items() if (
                 val is not None and not math.isnan(val))}
@@ -167,6 +223,7 @@ class BaseSolver():
             else:
                 self.log.add_scalars(log_name, log_dict, self.step)
 
+        '''
     def save_checkpoint(self, f_name, metric, score, show_msg=True):
         ''''
         Ckpt saver

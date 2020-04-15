@@ -24,7 +24,8 @@ def name2path(root, name):
     if name[:2] in code2path:
         path = Path(root, code2path[name[:2]], 'wav', name + '.wav')
     else:
-        path = Path(LIBRI_ROOT, name + '.wav')
+        path = Path(root, name + '.wav')
+        #path = Path(LIBRI_ROOT, name + '.wav')
     return path
 
 

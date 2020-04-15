@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 import yaml
+import comet_ml
 import torch
 import argparse
 import numpy as np
