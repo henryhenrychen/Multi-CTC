@@ -17,6 +17,7 @@ class Solver(BaseSolver):
         super().__init__(config, paras, mode)
         # Logger settings
         self.best_wer = {'ctc': 3.0}
+        self.best_per = {'ctc': 3.0}
         # Curriculum learning affects data loader
         self.curriculum = self.config['hparas']['curriculum']
 
@@ -60,6 +61,8 @@ class Solver(BaseSolver):
         # Losses
         # Note: zero_infinity=False is unstable?
         self.ctc_loss = torch.nn.CTCLoss(blank=0, zero_infinity=False)
+
+        self.eval_target = 'phone' if self.config['data']['corpus']['target'] == 'ipa' else 'char'
 
 
         # Optimizer
@@ -137,6 +140,7 @@ class Solver(BaseSolver):
                     #self.write_log('wer', {'tr_ctc': cal_er(self.tokenizer, ctc_output, txt, ctc=True)})
                     ctc_output = [x[:length].argmax(dim=-1) for x, length in zip(ctc_output, encode_len)]
                     self.write_log('per', {'tr_ctc': cal_er(self.tokenizer, ctc_output, txt, mode='per', ctc=True)})
+                    self.write_log('wer', {'tr_ctc': cal_er(self.tokenizer, ctc_output, txt, mode='wer', ctc=True)})
                     self.write_log(
                         'loss', {'tr_ctc': ctc_loss.cpu().item()})
 
@@ -155,6 +159,7 @@ class Solver(BaseSolver):
     def validate(self):
         # Eval mode
         self.model.eval()
+        dev_per = {'ctc': []}
         dev_wer = {'ctc': []}
 
         for i, data in enumerate(self.dv_set):
@@ -167,7 +172,8 @@ class Solver(BaseSolver):
                 ctc_output, encode_len = self.model(feat, feat_len)
 
             ctc_output = [x[:length].argmax(dim=-1) for x, length in zip(ctc_output, encode_len)]
-            dev_wer['ctc'].append(cal_er(self.tokenizer, ctc_output, txt, mode='per', ctc=True))
+            dev_per['ctc'].append(cal_er(self.tokenizer, ctc_output, txt, mode='per', ctc=True))
+            dev_wer['ctc'].append(cal_er(self.tokenizer, ctc_output, txt, mode='wer', ctc=True))
 
             # Show some example on tensorboard
             if i == len(self.dv_set)//2:
@@ -181,14 +187,22 @@ class Solver(BaseSolver):
         # Ckpt if performance improves
         for task in ['ctc']:
             dev_wer[task] = sum(dev_wer[task])/len(dev_wer[task])
-            if dev_wer[task] < self.best_wer[task]:
+            dev_per[task] = sum(dev_per[task])/len(dev_per[task])
+            if dev_per[task] < self.best_per[task]:
+                self.best_per[task] = dev_per[task]
+                self.save_checkpoint('best_{}.pth'.format('per'), 'per', dev_per[task])
+                self.log.log_other('dv_best_per', self.best_per['ctc'])
+            if self.eval_target == 'char' and dev_wer[task] < self.best_wer[task]:
                 self.best_wer[task] = dev_wer[task]
-                self.save_checkpoint('best_{}.pth'.format(task), 'wer', dev_wer[task])
-            self.log.log_other('dv_best_score', self.best_wer['ctc'])
-            self.write_log('per', {'dv_'+task: dev_wer[task]})
-        self.save_checkpoint('latest.pth', 'wer', dev_wer['ctc'], show_msg=False)
+                self.save_checkpoint('best_{}.pth'.format('wer'), 'wer', dev_wer[task])
+                self.log.log_other('dv_best_wer', self.best_wer['ctc'])
+
+            self.write_log('per', {'dv_'+task: dev_per[task]})
+            if self.eval_target == 'char':
+                self.write_log('wer', {'dv_'+task: dev_wer[task]})
+        self.save_checkpoint('latest.pth', 'per', dev_per['ctc'], show_msg=False)
         if self.paras.save_every:
-            self.save_checkpoint(f'{self.step}.path', 'wer', dev_wer['ctc'], show_msg=False)
+            self.save_checkpoint(f'{self.step}.path', 'per', dev_per['ctc'], show_msg=False)
 
         # Resume training
         self.model.train()
