@@ -7,6 +7,7 @@ import torch.nn.functional as F
 from src.util import init_weights, init_gate
 from src.module import VGGExtractor, CNNExtractor, RNNLayer
 from src.text import load_text_encoder
+import json
 import pdb
 
 
@@ -66,6 +67,7 @@ class ASR(nn.Module):
             else:
                 with open(mapping, 'r') as f:
                     mapping = json.load(f)
+                mapping = {tar_v:src_v for tar_v, src_v in mapping.items() if tar_v in cur_tokenizer._vocab_list}
 
             for tar_v, src_v in mapping.items():
                 tar_i = cur_tokenizer._vocab2idx[tar_v]
