@@ -22,7 +22,9 @@ def run(output_dir, base_config, src_ckpt_path, cuda_device=None):
     src_ckpt_path = Path(src_ckpt_path)
     src_config_path = Path(src_ckpt_path.parent, 'config.yaml')
     if not src_config_path.is_file():
-        return
+        # TODO for dealing with pretrain_mono
+        src_config_path = Path(src_ckpt_path.parents[1], '_'.join(src_ckpt_path.parent.name.split('_')[:-1]) + '.yaml')
+        #return
 
     config = yaml.load(open(base_config, 'r'), Loader=yaml.FullLoader)
     config['src']['ckpt'] = str(src_ckpt_path)
@@ -37,7 +39,7 @@ def run(output_dir, base_config, src_ckpt_path, cuda_device=None):
     with open(cur_config, 'w') as f:
         yaml.dump(config, f)
 
-    cmd = f"python main.py --test --config {cur_config} --name {Path(base_config).stem} --outdir {output_dir}"
+    cmd = f"python main.py --test --config {cur_config} --name {Path(base_config).stem} --outdir {output_dir} --logdir {output_dir}"
 
     if cuda_device is not None:
         cmd = f"CUDA_VISIBLE_DEVICES={cuda_device} " + cmd
@@ -48,7 +50,7 @@ def exec(args):
     cur_out_dir = Path(args.output_path, model_path_name)
     cur_out_dir.mkdir(exist_ok=True)
 
-    for path in Path(args.model_path).rglob('*best_ctc.pth'):
+    for path in Path(args.model_path).rglob('best*'):
         run(cur_out_dir, args.test_config, path, args.cuda_device)
 
 

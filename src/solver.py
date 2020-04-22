@@ -49,16 +49,17 @@ class BaseSolver():
         # Plugin list
         self.emb_decoder = None
 
+        # Logger settings
+        self.logdir = os.path.join(paras.logdir, self.exp_name)
+        os.makedirs(self.logdir, exist_ok=True)
+        self.log = self.get_comet_logger()
+
         if mode == 'train':
             # Filepath setup
             os.makedirs(paras.ckpdir, exist_ok=True)
             self.ckpdir = os.path.join(paras.ckpdir, self.exp_name)
             os.makedirs(self.ckpdir, exist_ok=True)
 
-            # Logger settings
-            self.logdir = os.path.join(paras.logdir, self.exp_name)
-            os.makedirs(self.logdir, exist_ok=True)
-            self.log = self.get_comet_logger()
             #self.log = SummaryWriter(
             #    self.logdir, flush_secs=self.TB_FLUSH_FREQ)
             self.timer = Timer()
@@ -93,12 +94,20 @@ class BaseSolver():
                                          auto_metric_logging=None,
                                          display_summary=False,
                                          )
-            comet_exp.set_name(self.exp_name)
-            comet_exp.add_tag(Path(self.ckpdir).parent.name)
-
             if self.paras.transfer:
+                comet_exp.set_name(self.exp_name)
+                comet_exp.add_tag(Path(self.ckpdir).parent.name)
                 comet_exp.add_tag('transfer')
                 comet_exp.add_tag(self.config['data']['corpus']['metas'][0])
+            if self.paras.test:
+                comet_exp.set_name(Path(self.paras.outdir).name)
+                comet_exp.add_tag(Path(self.paras.config).parents[2].name)
+                comet_exp.add_tag('test')
+                comet_exp.add_tag(Path(self.paras.config).parent.stem)
+                #comet_exp.add_tag(Path(self.paras.outdir).name)
+            else:
+                comet_exp.add_tag('train')
+
             for name, param in self.config.items():
                 if isinstance(param, dict):
                     comet_exp.log_parameters(param, prefix=name)

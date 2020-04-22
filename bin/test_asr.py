@@ -24,9 +24,11 @@ class Solver(BaseSolver):
         if 'batch_size' in self.config:
             self.config['data']['corpus']['batch_size'] = self.config['batch_size']
         self.config['data']['corpus']['mode'] = 'test'
-        self.config['data'].pop('transfer')
+        if 'transfer' in self.config['data']:
+            self.config['data'].pop('transfer')
         self.config['model'] = self.src_config['model']
 
+        self.eval_target = 'phone' if self.config['data']['corpus']['target'] == 'ipa' else 'char'
         # Override batch size for beam decoding
         self.greedy = self.config['decode']['beam_size'] == 1
         if not self.greedy:
@@ -74,14 +76,23 @@ class Solver(BaseSolver):
             tt_output.extend(ctc_output)
             tt_txt.extend(txt)
         f = open(self.cur_output_path, 'a')
-        er = []
+        per, wer = [], []
         for hyp, truth in zip(tt_output, tt_txt):
             p = self.tokenizer.decode(hyp.tolist(), ignore_repeat=True)
             t = self.tokenizer.decode(truth.tolist())
             f.write(f"{p}|{t}\n")
-            er.append(float(ed.eval(p, t)) / len(t))
-        tt_error = sum(er) / len(er)
-        f.write(f"ERROR|{float(tt_error)}\n")
+            per.append(float(ed.eval(p, t)) / len(t))
+            if self.eval_target == 'char':
+                p = p.split(' ')
+                t = t.split(' ')
+                wer.append(float(ed.eval(p, t)) / len(t))
+        per = sum(per) / len(per)
+        f.write(f"PER|{float(per)}\n")
+        self.log.log_other('test_per', per)
+        if self.eval_target == 'char':
+            wer = sum(wer) / len(wer)
+            f.write(f"WER|{float(wer)}\n")
+            self.log.log_other('test_wer', wer)
         f.close()
 
 
