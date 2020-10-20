@@ -1,7 +1,7 @@
 from pathlib import Path
 import os
 from tqdm import tqdm
-from phonemizer import phonemize
+from phonemizer.phonemize import phonemize
 from joblib import Parallel, delayed
 from functools import partial
 
@@ -12,7 +12,7 @@ root = '/home/henryhenrychen/DATA/corpus/LibriSpeech/LibriSpeech'
 meta_dir = 'data'
 
 def get_g2p_fn(code):
-    return partial(phonemize.phonemize,
+    return partial(phonemize,
             backend='espeak',
             language=code,
             language_switch='remove-flags')
