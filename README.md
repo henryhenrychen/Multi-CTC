@@ -32,7 +32,7 @@
     - we have 3 methos on output embedding when doing transfer learning 
         - ipa: use ipa as the ground truth to transfer, set ```transfer['method']``` as ```ipa``` （專家知識方法）
         - no: random intialize output embeddings, set ```transfer['method']``` as ```no```（從頭學習方法）
-        - mapping: use learned mapping to initialize output embedding, set ```transfer['method']``` as ```mapping``` （對映學習方法）
+        - mapping: use learned mapping to initialize output embedding, set ```transfer['method']``` as ```mapping``` （對映學習方法）and set ```transfer['mapping']``` as PATH_TO_MAPPING_JSON (ex: corpus/fr_map_15min_1k.json)
 - run ```python scripts/run_adapt.py --pretrain_path ckpt/en_sd0/ --pretrain_config config/pretrain/en.yaml --adapt_config config/adaptation/adapt_ipa_fr.yaml``` 
     - it automatically picks top 20 best-performed pretrain checkpoints as initialization and generates configs for adapatation according to adaptation 
     - run the commands on stdout 
