@@ -1,6 +1,10 @@
 ## Requirements
 - Python 3.7
 - Pytorch 1.4
+- pytorchaudio
+- pandas
+- matplotlib
+- editdistance
 - [PyYaml](https://pyyaml.org/wiki/PyYAMLDocumentation)
 - numpy
 - [comet_ml](https://www.comet.ml/site/)
