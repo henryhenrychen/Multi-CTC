@@ -70,8 +70,10 @@ class BaseSolver():
 
             self.verbose('Exp. name : {}'.format(self.exp_name))
             self.verbose('Loading data... large corpus may took a while.')
+            self.log = self.get_comet_logger()
 
         elif mode == 'test':
+            self.log = self.get_comet_logger()
             # Output path
             os.makedirs(paras.outdir, exist_ok=True)
             self.ckpdir = os.path.join(paras.outdir, self.exp_name)
@@ -84,7 +86,7 @@ class BaseSolver():
 
             self.verbose('Evaluating result of tr. config @ {}'.format(
                 config['src']['config']))
-        self.log = self.get_comet_logger()
+
 
     def get_comet_logger(self):
         if not self.paras.load :

@@ -94,7 +94,7 @@ def exec(args):
     for pretrain_path in Path(args.pretrain_path).rglob('*0.path'):
         step = int(str(pretrain_path.stem))
         if args.adapt_every_step is None or step % args.adapt_every_step == 0:
-            score = torch.load(pretrain_path, map_location='cpu')['wer']
+            score = torch.load(pretrain_path, map_location='cpu')['per']
             valids.append((pretrain_path, score))
     valids = sorted(valids, key=lambda x: x[1])[:args.top_adapt_num]
     for pretrain_path, _ in valids:

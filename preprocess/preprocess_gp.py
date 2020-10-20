@@ -6,10 +6,10 @@ from joblib import Parallel, delayed
 from functools import partial
 
 langs = [
-    ("German", 'de'),
+    #("German", 'de'),
     ("French", 'fr-fr'),
-    ("Czech", 'cs'),
-    ("Spanish", 'es')
+    #("Czech", 'cs'),
+    #("Spanish", 'es')
 ]
 root = 'GlobalPhone'
 meta_dir = 'data'
