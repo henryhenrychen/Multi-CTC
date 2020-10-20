@@ -52,7 +52,6 @@ class BaseSolver():
         # Logger settings
         self.logdir = os.path.join(paras.logdir, self.exp_name)
         os.makedirs(self.logdir, exist_ok=True)
-        self.log = self.get_comet_logger()
 
         if mode == 'train':
             # Filepath setup
@@ -85,6 +84,7 @@ class BaseSolver():
 
             self.verbose('Evaluating result of tr. config @ {}'.format(
                 config['src']['config']))
+        self.log = self.get_comet_logger()
 
     def get_comet_logger(self):
         if not self.paras.load :
